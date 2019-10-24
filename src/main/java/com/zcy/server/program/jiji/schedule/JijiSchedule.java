@@ -4,7 +4,9 @@ import com.zcy.server.program.common.service.EmailService;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,9 @@ public class JijiSchedule {
     @Autowired
     private EmailService emailService;
 
+    @Value("${passwd}")
+    private String passwd;
+
     public static void main(String[] args) {
         JijiSchedule jijiSchedule = new JijiSchedule();
         jijiSchedule.receiveSelenium();
@@ -32,10 +37,22 @@ public class JijiSchedule {
         System.out.println("******************************");
         System.out.println("几鸡开始领取流量");
 
-        System.setProperty("webdriver.chrome.driver", "D:\\chromedriver_win32\\chromedriver.exe");
+        // System.setProperty("webdriver.chrome.driver", "D:\\chromedriver_win32\\chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", "/opt/google/chromedriver");
+
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--headless");
+        chromeOptions.addArguments("start-maximized"); // open Browser in maximized mode
+        chromeOptions.addArguments("disable-infobars"); // disabling infobars
+        chromeOptions.addArguments("--disable-extensions"); // disabling extensions
+        chromeOptions.addArguments("--disable-gpu"); // applicable to windows os only
+        chromeOptions.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems
+        chromeOptions.addArguments("--no-sandbox"); // Bypass OS security model
+
 
         // chromedriver服务地址
-        ChromeDriver driver = new ChromeDriver();
+        ChromeDriver driver = new ChromeDriver(chromeOptions);
+
 
         try {
             driver.get("https://jiji.ws/signin");
@@ -48,7 +65,7 @@ public class JijiSchedule {
             passwdEmail.clear();
 
             inputEmail.sendKeys("xiadao12@yeah.net");
-            passwdEmail.sendKeys("yang12345");
+            passwdEmail.sendKeys(passwd);
 
             buttonLogin.click();
 
