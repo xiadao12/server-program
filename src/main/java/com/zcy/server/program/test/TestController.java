@@ -22,7 +22,7 @@ public class TestController {
 
     @GetMapping("/jiji")
     public void test() {
-        // jijiSchedule.execute();
-        //jijiSchedule.receivePoint();
+        System.out.println("请求jiji");
+        jijiSchedule.execute();
     }
 }

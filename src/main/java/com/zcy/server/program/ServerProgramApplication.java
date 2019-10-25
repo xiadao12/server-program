@@ -12,12 +12,6 @@ public class ServerProgramApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
         SpringApplication.run(ServerProgramApplication.class, args);
-
-        //GuoPeiSchedule guoPeiSchedule = new GuoPeiSchedule();
-        //guoPeiSchedule.execute();
-
-        //JijiSchedule jijiSchedule = new JijiSchedule();
-        //jijiSchedule.execute();
     }
 
 

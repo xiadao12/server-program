@@ -1,13 +1,13 @@
 package com.zcy.server.program.jiji.schedule;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.ScriptResult;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomElement;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.zcy.server.program.common.service.EmailService;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,70 +28,86 @@ public class JijiSchedule {
 
     public static void main(String[] args) {
         JijiSchedule jijiSchedule = new JijiSchedule();
-        jijiSchedule.receiveSelenium();
+        jijiSchedule.execute();
     }
 
-    @Scheduled(cron = "0 * * * * ? ")
-    public void receiveSelenium() {
-
-        System.out.println("******************************");
-        System.out.println("几鸡开始领取流量");
-
-        // System.setProperty("webdriver.chrome.driver", "D:\\chromedriver_win32\\chromedriver.exe");
-        System.setProperty("webdriver.chrome.driver", "/opt/google/chromedriver");
-
-        ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--headless");
-        chromeOptions.addArguments("start-maximized"); // open Browser in maximized mode
-        chromeOptions.addArguments("disable-infobars"); // disabling infobars
-        chromeOptions.addArguments("--disable-extensions"); // disabling extensions
-        chromeOptions.addArguments("--disable-gpu"); // applicable to windows os only
-        chromeOptions.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems
-        chromeOptions.addArguments("--no-sandbox"); // Bypass OS security model
-
-
-        // chromedriver服务地址
-        ChromeDriver driver = new ChromeDriver(chromeOptions);
-
-
+    //@Scheduled(cron = "0 * * * * ? ")
+    public void execute() {
+        System.out.println("执行");
+        // 实例化Web客户端
+        WebClient webClient = null;
         try {
-            driver.get("https://jiji.ws/signin");
+            webClient = new WebClient(BrowserVersion.CHROME);
+            // webClient.setJavaScriptTimeout(5000);
+            //接受任何主机连接 无论是否有有效证书
+            webClient.getOptions().setUseInsecureSSL(true);
+            //设置支持javascript脚本
+            webClient.getOptions().setJavaScriptEnabled(true);
+            //禁用css支持
+            webClient.getOptions().setCssEnabled(false);
+            //js运行错误时不抛出异常
+            webClient.getOptions().setThrowExceptionOnScriptError(false);
+            //设置连接超时时间
+            webClient.getOptions().setTimeout(20000);
+            webClient.getOptions().setDoNotTrackEnabled(false);
 
-            WebElement inputEmail = driver.findElementsById("email").get(1);
-            WebElement passwdEmail = driver.findElementsById("passwd").get(1);
-            WebElement buttonLogin = driver.findElementById("login");
+            //  解析获取页面
+            HtmlPage page = webClient.getPage("https://jiji.ws/signin");
 
-            inputEmail.clear();
-            passwdEmail.clear();
+            System.out.println(page.asText());
 
-            inputEmail.sendKeys("xiadao12@yeah.net");
-            passwdEmail.sendKeys(passwd);
+            page.executeJavaScript("document.getElementsByName('Email')[0].value=xiadao12@yeah.net");
+            page.executeJavaScript("document.getElementsByName('Passwd')[0].value=" + passwd);
+            DomElement button_login = page.getElementById("login");
+            button_login.click();
 
-            buttonLogin.click();
+            Thread.sleep(20 * 1000);
 
-            Thread.sleep(10000);
+            System.out.println(page.getBaseURI());
 
-            driver.executeScript("document.getElementById('result').remove()");
-            driver.executeScript("document.querySelector('.modal-backdrop').remove();");
+            page.executeJavaScript("document.getElementById('result').remove()");
+            page.executeJavaScript("document.querySelector('.modal-backdrop').remove();");
 
-            Thread.sleep(1000);
+            Thread.sleep(1 * 1000);
 
-/*        WebElement buttonCheckin = driver.findElementById("checkin");
-        buttonCheckin.click();*/
+            // 点击签到签判断是否已签过
+            if (!haveSigned(page)) {
+                DomElement buttonCheckin = page.getElementById("checkin");
+                buttonCheckin.click();
 
-            String havedSign = driver.findElementByClassName("checkin-btn").findElement(By.tagName("button")).getText();
-            if (!havedSign.contains("今日已签")) {
-                System.out.println("几鸡领取流量失败");
-                emailService.sendEmail("几鸡领取流量失败", "几鸡领取流量失败");
+                Thread.sleep(5 * 1000);
+
+                if (!haveSigned(page)) {
+                    System.out.println("几鸡领取流量失败");
+                    emailService.sendEmail("几鸡领取流量失败", "几鸡领取流量失败");
+                }
+
+                System.out.println("几鸡签到成功");
             }
-
-            System.out.println("签到成功");
         } catch (Exception e) {
             System.out.println("几鸡领取流量失败" + e.toString());
             emailService.sendEmail("几鸡领取流量失败", "几鸡领取流量失败" + e.toString());
         } finally {
-            driver.close();
+            if (webClient != null) {
+                webClient.close();
+            }
         }
+
+    }
+
+    /**
+     * 判断是否已签过
+     *
+     * @param page
+     * @return
+     */
+    private Boolean haveSigned(HtmlPage page) {
+        ScriptResult siginButtonValue = page.executeJavaScript("document.querySelector('.checkin-btn>button').value");
+        if (siginButtonValue.getJavaScriptResult().toString().contains("今日已签")) {
+            return true;
+        }
+
+        return false;
     }
 
 }
