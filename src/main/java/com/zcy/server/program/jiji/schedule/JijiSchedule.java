@@ -33,12 +33,14 @@ public class JijiSchedule {
 
     //@Scheduled(cron = "0 * * * * ? ")
     public void execute() {
+        passwd = "yang12345";
+
         System.out.println("执行");
         // 实例化Web客户端
         WebClient webClient = null;
         try {
             webClient = new WebClient(BrowserVersion.CHROME);
-            // webClient.setJavaScriptTimeout(5000);
+            webClient.setJavaScriptTimeout(10000);
             //接受任何主机连接 无论是否有有效证书
             webClient.getOptions().setUseInsecureSSL(true);
             //设置支持javascript脚本
@@ -48,22 +50,30 @@ public class JijiSchedule {
             //js运行错误时不抛出异常
             webClient.getOptions().setThrowExceptionOnScriptError(false);
             //设置连接超时时间
-            webClient.getOptions().setTimeout(20000);
+            //webClient.getOptions().setTimeout(20000);
             webClient.getOptions().setDoNotTrackEnabled(false);
 
             //  解析获取页面
             HtmlPage page = webClient.getPage("https://jiji.ws/signin");
+            //HtmlPage page = webClient.getPage("https://www.baidu.com");
 
             System.out.println(page.asText());
 
-            page.executeJavaScript("document.getElementsByName('Email')[0].value=xiadao12@yeah.net");
-            page.executeJavaScript("document.getElementsByName('Passwd')[0].value=" + passwd);
+            page.executeJavaScript("document.getElementsByName('Email')[0].value='xiadao12@yeah.net'");
+            page.executeJavaScript("document.getElementsByName('Password')[0].value='" + passwd + "'");
             DomElement button_login = page.getElementById("login");
+
+            ScriptResult scriptResult = page.executeJavaScript("document.getElementsByName('Email')[0].value");
+            ScriptResult scriptResult1 = page.executeJavaScript("document.getElementsByName('Password')[0].value");
+
             button_login.click();
 
-            Thread.sleep(20 * 1000);
+            Thread.sleep(15 * 1000);
 
             System.out.println(page.getBaseURI());
+
+
+            ScriptResult scriptResult2 = page.executeJavaScript("document.getElementById('result')");
 
             page.executeJavaScript("document.getElementById('result').remove()");
             page.executeJavaScript("document.querySelector('.modal-backdrop').remove();");
