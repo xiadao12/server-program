@@ -33,8 +33,6 @@ public class JijiSchedule {
 
     //@Scheduled(cron = "0 * * * * ? ")
     public void execute() {
-        passwd = "yang12345";
-
         System.out.println("执行");
         // 实例化Web客户端
         WebClient webClient = null;
